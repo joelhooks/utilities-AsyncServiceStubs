@@ -1,0 +1,29 @@
+A couple of AsyncStub classes "found here":http://www.brianlegros.com/blog/2009/02/21/using-stubs-for-httpservice-and-remoteobject-in-flex/
+
+<pre>public class ClassWithHTTPServiceDependencyTest extends TestCase
+{
+   private var _classBeingTested : ClassWithHTTPServiceDependency;
+   private var _stub : HTTPServiceStub;
+ 
+   override protected function setUp() : void
+   {
+      _classBeingTested = new ClassWithHTTPServiceDependency();
+      _stub = new HTTPServiceStub("http://thisisntarealdomain.com");
+      _stub.delay = 500;
+      _classBeingTested.service = _stub;
+   }
+ 
+   public function testSendWithTokenResult() : void
+   {
+      var result : Function = function (event : DynamicEvent, passThroughData : Object) : void
+      {
+         assertEquals("GOAL!", event.payload);
+      };
+ 
+      _stub.result(null, "GOAL!");
+ 
+      _classBeingTested.addEventListener("success", asyncHandler(result, 2000));
+      _classBeingTested.someMethodUsingHTTPService();
+   }
+}</pre>
+

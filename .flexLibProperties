@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" version="3">
+  <includeClasses>
+    <classEntry path="org.robotlegs.utilities.asyncstub.service.AsyncStubService"/>
+    <classEntry path="net.digitalprimates.fluint.stubs.HTTPServiceStub"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>
