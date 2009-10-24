@@ -1,3 +1,7 @@
+/*
+* http://www.brianlegros.com/blog/2009/02/21/using-stubs-for-httpservice-and-remoteobject-in-flex/
+* this was taken from the above URL.
+*/
 package net.digitalprimates.fluint.stubs
 {
 	import flash.utils.Dictionary;

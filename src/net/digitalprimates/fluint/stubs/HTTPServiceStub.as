@@ -1,3 +1,7 @@
+/*
+ * http://www.brianlegros.com/blog/2009/02/21/using-stubs-for-httpservice-and-remoteobject-in-flex/
+ * this was taken from the above URL.
+*/
 package net.digitalprimates.fluint.stubs
 {
 	import flash.events.TimerEvent;
@@ -19,6 +23,9 @@ package net.digitalprimates.fluint.stubs
 		//default num of milliseconds to wait before dispatching events
 		//don't put too low otherwise your token responders may not be registered
 		public var delay : Number = 1000;
+		
+		private var token:AsyncToken;
+		private var parameters:Object;
 		
 		public function HTTPServiceStub(rootURL : String = null, destination : String = null)
 		{
@@ -44,34 +51,31 @@ package net.digitalprimates.fluint.stubs
 		
 		private function configureResponseTimer(parameters : Object) : AsyncToken
 		{
-			var token : AsyncToken = new AsyncToken(null);
-			var service : HTTPService  = this;
+			token = new AsyncToken(null);
+			this.parameters = parameters;
 			
 			//use a time to give time for the caller to map responders to the asyncToken
 			var timer : Timer = new Timer(this.delay, 1);
 			
-			timer.addEventListener(
-				TimerEvent.TIMER_COMPLETE, 
-				function(event : TimerEvent) : void 
-				{
-					//loop over all responders to emulate a successful call being made
-					for each(var responder : IResponder in token.responders)
-					{
-						var response : Function = isFaultCall(parameters) ? responder.fault : responder.result;
-						response.apply(null, [generateEvent(parameters)]);
-					}
-					
-					//dispatch event to service just in case token wasn't used
-					service.dispatchEvent(generateEvent(parameters));
-				}, 
-				false, 
-				0, 
-				true
-			);
+			timer.addEventListener(	TimerEvent.TIMER_COMPLETE, handleTimer);
 			
 			timer.start();
 			
 			return token;
+		}
+		
+		private function handleTimer(event:TimerEvent):void
+		{
+			event.target.removeEventListener(TimerEvent.TIMER_COMPLETE, handleTimer);
+			//loop over all responders to emulate a successful call being made
+			for each(var responder : IResponder in token.responders)
+			{
+				var response : Function = isFaultCall(parameters) ? responder.fault : responder.result;
+				response.apply(null, [generateEvent(parameters)]);
+			}
+			
+			//dispatch event to service just in case token wasn't used
+			dispatchEvent(generateEvent(parameters));			
 		}
 		
 		private function isFaultCall(parameters : Object) : Boolean
