@@ -75,7 +75,10 @@ package net.digitalprimates.fluint.stubs
 			}
 			
 			//dispatch event to service just in case token wasn't used
-			dispatchEvent(generateEvent(parameters));			
+			dispatchEvent(generateEvent(parameters));	
+			
+			this.token = null;
+			this.parameters = null;
 		}
 		
 		private function isFaultCall(parameters : Object) : Boolean

@@ -57,23 +57,27 @@ package net.digitalprimates.fluint.stubs
 	}
 }
 
-import mx.rpc.AsyncToken;
 import net.digitalprimates.fluint.stubs.RemoteObjectStub;
-import mx.messaging.config.ServerConfig;
-import mx.rpc.Fault;
-import flash.utils.Dictionary;
-import mx.rpc.remoting.Operation;
-import mx.rpc.remoting.RemoteObject;
 import flash.events.TimerEvent;
+import flash.utils.Dictionary;
+import flash.utils.Timer;
+
+import mx.rpc.AsyncToken;
+import mx.rpc.Fault;
+import mx.rpc.IResponder;
 import mx.rpc.events.AbstractEvent;
 import mx.rpc.events.FaultEvent;
 import mx.rpc.events.ResultEvent;
-import flash.utils.Timer;
-import mx.rpc.IResponder;
+import mx.rpc.remoting.Operation;
+import mx.rpc.remoting.RemoteObject;
 
 internal class OperationStub extends Operation
 {
 	public var _resultData : Dictionary;
+	
+	private var token:AsyncToken;
+	private var args:Array;
+	private var stub:RemoteObjectStub;
 	
 	public function OperationStub(remoteObject : RemoteObject, name : String, resultData : Dictionary)
 	{
@@ -88,34 +92,37 @@ internal class OperationStub extends Operation
 	
 	private function configureResponseTimer(args : Array) : AsyncToken
 	{
-		var token : AsyncToken = new AsyncToken(null);
-		var stub : RemoteObjectStub = RemoteObjectStub(service);
+		this.stub = RemoteObjectStub(service);
+		this.token = new AsyncToken(null);
+		this.args = args;
 		
 		//use a time to give time for the caller to map responders to the asyncToken
-		var timer : Timer = new Timer(stub.delay, 1);
+		var timer : Timer = new Timer(this.stub.delay, 1);
 		
-		timer.addEventListener(
-			TimerEvent.TIMER_COMPLETE, 
-			function(event : TimerEvent) : void 
-			{
-				//loop over all responders to emulate a successful call being made
-				for each(var responder : IResponder in token.responders)
-				{
-					var response : Function = isFault(args) ? responder.fault : responder.result;
-					response.apply(null, [generateEvent(args)]);
-				}
-				
-				//send the result event to the RemoteObject as well
-				stub.dispatchEvent(generateEvent(args));
-			}, 
-			false, 
-			0, 
-			true
-		);
+		timer.addEventListener(	TimerEvent.TIMER_COMPLETE, 	handleTimer );
 		
 		timer.start();
 		
 		return token;
+	}
+	
+	private function handleTimer(event:TimerEvent):void
+	{
+		
+		event.target.removeEventListener(TimerEvent.TIMER_COMPLETE, handleTimer);
+		//loop over all responders to emulate a successful call being made
+		for each(var responder : IResponder in token.responders)
+		{
+			var response : Function = isFault(args) ? responder.fault : responder.result;
+			response.apply(null, [generateEvent(args)]);
+		}
+		
+		//send the result event to the RemoteObject as well
+		stub.dispatchEvent(generateEvent(args));	
+		
+		this.token = null;
+		this.stub = null;
+		this.args = null;
 	}
 	
 	private function isFault(args : Array) : Boolean
